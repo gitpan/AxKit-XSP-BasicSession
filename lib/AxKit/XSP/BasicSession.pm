@@ -20,7 +20,7 @@ sub parse_end   { Apache::AxKit::Language::XSP::TaglibHelper::parse_end(@_); }
 
 @ISA = qw(Apache::AxKit::Language::XSP::TaglibHelper);
 $NS = 'http://www.axkit.org/2002/XSP/BasicSession';
-$VERSION = "0.12";
+$VERSION = "0.14";
 
 use strict;
 

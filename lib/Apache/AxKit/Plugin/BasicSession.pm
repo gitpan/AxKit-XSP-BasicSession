@@ -1,10 +1,11 @@
 package Apache::AxKit::Plugin::BasicSession;
 use Apache::Session::Flex;
 use Apache::Request;
+use Apache::Cookie;
 use constant DEBUG => 0;
 use lib qw( $VERSION %session );
 
-$VERSION = 0.12;
+$VERSION = 0.14;
 
 sub handler
 {
@@ -16,10 +17,10 @@ sub handler
     my $opts = {};
 
     # Load the configuration parameters
-    my $cfgDataStore = $r->dir_config( 'SessionDataStore' );
-    my $cfgLock      = $r->dir_config( 'SessionLock' );
-    my $cfgGenerate  = $r->dir_config( 'SessionGenerate' );
-    my $cfgSerialize = $r->dir_config( 'SessionSerialize' );
+    my $cfgDataStore = $r->dir_config( 'BasicSessionDataStore' );
+    my $cfgLock      = $r->dir_config( 'BasicSessionLock' );
+    my $cfgGenerate  = $r->dir_config( 'BasicSessionGenerate' );
+    my $cfgSerialize = $r->dir_config( 'BasicSessionSerialize' );
 
     my %flex_options = 
     (
@@ -30,7 +31,7 @@ sub handler
     );
 
     # Load session-type specific parameters
-    foreach my $arg ( split( /\s*,\s*/, $r->dir_config( 'SessionArgs' ) ) )
+    foreach my $arg ( split( /\s*,\s*/, $r->dir_config( 'BasicSessionArgs' ) ) )
     {
         my ($key, $value) = split( /\s*=>\s*/, $arg );
         $flex_options{$key} = $value;
@@ -58,8 +59,19 @@ sub handler
     # Might be a new session, so lets give them a cookie
     if (!defined($cookie) || $no_cookie)
     {
-        my $session_cookie = "SESSION_ID=$session{_session_id}";
-        $r->header_out("Set-Cookie" => $session_cookie);
+        my %cookie_options = ();
+        $cookie_options{'-expires'} = $r->dir_config('BasicSessionCookieExpires');
+        $cookie_options{'-domain'} = $r->dir_config('BasicSessionCookieDomain');
+        $cookie_options{'-path'} = $r->dir_config('BasicSessionCookiePath');
+        if ($r->dir_config('BasicSessionCookieSecure') =~ /yes/) {
+            $cookie_options{'-secure'} = 1;
+        }
+        my $session_cookie = Apache::Cookie->new($r,
+            -name => 'SESSION_ID',
+            -value => $session{_session_id},
+            %cookie_options,
+        );
+        $session_cookie->bake;
         $session{_creation_time} = time;
         print STDERR "Set a new header for the session cookie: \"$session_cookie\"\n" if DEBUG;
     }
@@ -89,8 +101,8 @@ Apache::AxKit::Plugin::BasicSession - AxKit plugin that handles setting / loadin
 =head1 SYNOPSIS
 
     AxAddPlugin Apache::AxKit::Plugin::BasicSession
-    PerlSetVar SessionDataStore DB_File
-    PerlSetVar SessionArgs "FileName => /tmp/session"
+    PerlSetVar BasicSessionDataStore DB_File
+    PerlSetVar BasicSessionArgs "FileName => /tmp/session"
 
 =head1 DESCRIPTION
 
@@ -100,32 +112,40 @@ you to specify all the parameters normally configurable through ::Flex.
 
 =head1 Parameter Reference
 
-=head2 C<SessionDataStore>
+=head2 C<BasicSessionDataStore>
 
 Sets the backend datastore module.  Default: DB_File
 
-=head2 C<SessionLock>
+=head2 C<BasicSessionLock>
 
 Sets the record locking module.  Default: Null
 
-=head2 C<SessionGenerate>
+=head2 C<BasicSessionGenerate>
 
 Sets the session id generation module.  Default: MD5
 
-=head2 C<SessionSerialize>
+=head2 C<BasicSessionSerialize>
 
 Sets the hash serializer module.  Default: Storable
 
-=head2 C<SessionArgs>
+=head2 C<BasicSessionArgs>
 
 Comma-separated list of name/value pairs.  This is used to pass additional
 parameters to Apache::Session::Flex for the particular modules you select.
 For instance: if you use MySQL for your DataStore, you need to pass the
 database connection information.  You could pass this by calling:
 
-    PerlSetVar SessionArgs "DataSource => dbi:mysql:sessions, \
-                            UserName   => session_user, \
-                            Password   => session_password"
+    PerlSetVar BasicSessionArgs "DataSource => dbi:mysql:sessions, \
+                                 UserName   => session_user, \
+                                 Password   => session_password"
+
+=head2 C<BasicSessionCookie*>
+
+These arguments set the parameters your session cookie will be created
+with.  The possible options are "BasicSessionCookiePath", "BasicSessionCookieDomain",
+"BasicSessionCookieExpires", "BasicSessionCookieSecure".  All options take an arbitrary
+string, except Expires and Secure.  BasicSessionCookieSecure takes a boolean (yes or no)
+while Expires takes a time interval (for more information, please see L<Apache::Cookie>).
 
 =head2 C<AxKit::XSP::Session Support>
 
