@@ -1,5 +1,8 @@
 Revision history for Perl extension AxKit::XSP::BasicSession.
 
+0.18  Tue Jul  6 10:20:00 PDT 2004
+    - Fixed a stupid comment in the Apache::AxKit::Plugin::BasicSession
+
 0.17  Fri Feb  6 13:46:37 PDT 2004
     - Added control logic (if/unless, etc)
     - Added more documentation and comments

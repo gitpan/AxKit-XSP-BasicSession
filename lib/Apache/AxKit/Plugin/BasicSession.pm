@@ -1,5 +1,5 @@
 package Apache::AxKit::Plugin::BasicSession;
-# $Id: BasicSession.pm,v 1.11 2004/02/06 20:26:33 nachbaur Exp $
+# $Id: BasicSession.pm,v 1.12 2004/07/06 23:16:04 nachbaur Exp $
 
 use Apache::Session::Flex;
 use Apache::Request;
@@ -45,7 +45,7 @@ sub handler
 
     my $sessionid = undef;
     if (defined $uri_token and length($uri_token) > 0) {
-        $sessionid = $apr->param($uri_token);
+        $sessionid = $r->param($uri_token);
     }
 
     my $cookie_exists = 0;

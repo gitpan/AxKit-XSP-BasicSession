@@ -7,4 +7,4 @@ lib/AxKit/XSP/BasicSession.pm
 lib/Apache/AxKit/Plugin/BasicSession.pm
 lib/Apache/AxKit/Plugin/AddXSLParams/BasicSession.pm
 example.xsp
-META.yml                                Module meta-data (added by MakeMaker)
+META.yml                                 Module meta-data (added by MakeMaker)
