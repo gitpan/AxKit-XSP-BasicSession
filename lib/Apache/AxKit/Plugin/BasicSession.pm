@@ -1,5 +1,5 @@
 package Apache::AxKit::Plugin::BasicSession;
-# $Id: BasicSession.pm,v 1.4 2003/09/09 17:11:30 nachbaur Exp $
+# $Id: BasicSession.pm,v 1.11 2004/02/06 20:26:33 nachbaur Exp $
 
 use Apache::Session::Flex;
 use Apache::Request;
@@ -7,12 +7,11 @@ use Apache::Cookie;
 use Apache::AuthCookie;
 use vars qw( $VERSION %session );
 
-$VERSION = 0.16;
+$VERSION = 0.17;
 
 sub handler
 {
     my $r = Apache::Request->instance(shift);
-    my $debug = $r->dir_config("BasicSessionDebug") || 0;
 
     # Session handling code
     untie %session if (ref tied %session);
@@ -26,6 +25,7 @@ sub handler
     # if the user hasn't set this up for handling authentication (e.g. basic session-
     # handling code)
     my $prefix = $r->auth_name || 'BasicSession';
+    my $debug = $r->dir_config($prefix . "Debug") || 0;
 
     my %flex_options = (
         Store     => $r->dir_config( $prefix . 'DataStore' ) || 'DB_File',
@@ -33,6 +33,7 @@ sub handler
         Generate  => $r->dir_config( $prefix . 'Generate' ) || 'MD5',
         Serialize => $r->dir_config( $prefix . 'Serialize' ) || 'Storable'
     );
+    my $uri_token = $r->dir_config( $prefix . 'URIToken' ) || undef;
 
     #
     # Load session-type specific parameters, comma-separated, name => value pairs
@@ -42,18 +43,27 @@ sub handler
         $flex_options{$key} = $value;
     }
 
-    #
-    # Read in the cookie if this is an old session, using this realm's name as part
-    # of the cookie
-    my $cookie = $r->header_in('Cookie');
-    my $cookie_id = undef;
-    my ($auth_type, $auth_name) = ($r->auth_type, $r->auth_name);
-    ($cookie_id) = $cookie =~ /${auth_type}_$auth_name=(\w*)/;
+    my $sessionid = undef;
+    if (defined $uri_token and length($uri_token) > 0) {
+        $sessionid = $apr->param($uri_token);
+    }
+
+    my $cookie_exists = 0;
+    my $cookie_name = $r->dir_config($prefix . 'Cookie') ? $r->dir_config($prefix . 'Cookie') : 'SID';
+    unless (defined $sessionid) {
+        #
+        # Read in the cookie if this is an old session, using this realm's name as part
+        # of the cookie
+        my $cookie = $r->header_in('Cookie');
+        #my ($auth_type, $auth_name) = ($r->auth_type, $r->auth_name);
+        ($sessionid) = $cookie =~ /$cookie_name=(\w*)/;
+        $cookie_exists = defined($sessionid) ? 1 : 0;
+    }
 
     #
     # Attempt to load the session from our back-end datastore
-    eval { tie %session, 'Apache::Session::Flex', $cookie_id, \%flex_options }
-        if ($cookie_id and $cookie_id ne '');
+    eval { tie %session, 'Apache::Session::Flex', $sessionid, \%flex_options }
+        if ($sessionid and $sessionid ne '');
     unless ( $session{_session_id} ) {
         warn "Creating a new session, since \"$session{_session_id}\" didn't work.\n"
             if $debug;
@@ -63,15 +73,24 @@ sub handler
     }
 
     # Might be a new session, so lets give them a cookie
-    if (!defined($cookie_id) or $no_cookie) {
-        Apache::AuthCookie->send_cookie($session{_session_id});
-        $session{_creation_time} = time;
+    my $current_time = time;
+    if (!$cookie_exists or $no_cookie) {
+        #Apache::AuthCookie->send_cookie($session{_session_id});
+        my %cookie_args = ();
+        $cookie_args{'-name'} = $cookie_name;
+        $cookie_args{'-value'} = $session{_session_id};
+        $cookie_args{'-expires'} = $r->dir_config($prefix . 'CookieExpires');
+        $cookie_args{'-domain'} = $r->dir_config($prefix . 'CookieDomain');
+        $cookie_args{'-path'} = $r->dir_config($prefix . 'CookiePath');
+        Apache::Cookie->new($r, %cookie_args)->bake;
+
+        $session{_creation_time} = $current_time;
         warn "Set a new header for the session cookie: \"$session_cookie\"\n"
             if $debug;
     }
 
     # Update the "Last Accessed" timestamp key
-    $session{_last_accessed_time} = time;
+    $session{_last_accessed_time} = $current_time;
 
     warn "Successfully set the session object in the pnotes table\n" 
         if $debug;
@@ -96,8 +115,9 @@ Apache::AxKit::Plugin::BasicSession - AxKit plugin that handles setting / loadin
 =head1 SYNOPSIS
 
     AxAddPlugin Apache::AxKit::Plugin::BasicSession
-    PerlSetVar BasicSessionDataStore DB_File
-    PerlSetVar BasicSessionArgs "FileName => /tmp/session"
+    AxAddPlugin Apache::AxKit::Plugin::AddXSLParams::BasicSession
+    PerlSetVar BasicSessionDataStore "File"
+    PerlSetVar BasicSessionArgs "Directory => /tmp/session"
 
 =head1 DESCRIPTION
 

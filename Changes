@@ -1,5 +1,10 @@
 Revision history for Perl extension AxKit::XSP::BasicSession.
 
+0.17  Fri Feb  6 13:46:37 PDT 2004
+    - Added control logic (if/unless, etc)
+    - Added more documentation and comments
+    - Fixed an annoying bug that makes session names "_"
+
 0.16  Tue Sep  9 09:05:48 PDT 2003
     - Fixed some spelling errors in the POD documentation, as per
       rt.cpan.org bug #2287

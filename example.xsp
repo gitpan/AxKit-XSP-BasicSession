@@ -26,9 +26,9 @@
     </p>
     <p>
       You can reset your session by
-      <a href="sessiontest.xsp?reset=1">
+      <a href="example.xsp?reset=1">
         adding ?reset=1 to your query string
-      </a>. Don't forget to <a href="sessiontest.xsp">remove it before
+      </a>. Don't forget to <a href="example.xsp">remove it before
       continuing</a>, or else your session will keep getting re-set.
     </p>
 

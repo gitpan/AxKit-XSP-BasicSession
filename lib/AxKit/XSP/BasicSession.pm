@@ -1,5 +1,5 @@
 package AxKit::XSP::BasicSession;
-# $Id: BasicSession.pm,v 1.2 2003/09/09 16:34:47 nachbaur Exp $
+# $Id: BasicSession.pm,v 1.9 2004/02/06 22:13:14 nachbaur Exp $
 
 use Apache;
 use Apache::AxKit::Language::XSP::TaglibHelper;
@@ -18,11 +18,20 @@ sub parse_end   { Apache::AxKit::Language::XSP::TaglibHelper::parse_end(@_); }
     'get_last_accessed_time(;$as,$format)',
     'invalidate()',
     'is_new()',
+    'if($name;$value):conditional=1:isreally=ifkey',
+    'unless($name;$value):conditional=1:isreally=unlesskey',
+    'if_regex($name,$value):conditional=1',
+    'unless_regex($name,$value):conditional=1',
+    'if_exists($name):conditional=1',
+    'unless_exists($name):conditional=1',
+    'enumerate():listtag=session-keys=key=1',
+    'exists($name):isreally=keyexists',
+    'count()',
 );
 
 @ISA = qw(Apache::AxKit::Language::XSP::TaglibHelper);
 $NS = 'http://www.axkit.org/2002/XSP/BasicSession';
-$VERSION = "0.16";
+$VERSION = "0.17";
 
 use strict;
 
@@ -31,15 +40,20 @@ use strict;
 sub get_attribute
 {
     my ( $attribute ) = @_;
+    #
+    # Trim unnecessary whitespace
     $attribute =~ s/^\s*//;
     $attribute =~ s/\s*$//;
-    my $r = Apache->request;
+
+    #
+    # Throw the session key's value back at the user
     return $Apache::AxKit::Plugin::BasicSession::session{$attribute};
 }
 
 sub get_id
 {
-    my $r = Apache->request;
+    #
+    # Hurl the Session ID to the user
     return $Apache::AxKit::Plugin::BasicSession::session{_session_id};
 }
 
@@ -51,45 +65,63 @@ sub get_id
 sub get_creation_time
 {
     my ( $as, $format ) = @_;
-    my $r = Apache->request;
     return _get_time( $as, $Apache::AxKit::Plugin::BasicSession::session{_creation_time}, $format );
 }
 
 sub get_last_accessed_time
 {
     my ( $as, $format ) = @_;
-    my $r = Apache->request;
     return _get_time( $as, $Apache::AxKit::Plugin::BasicSession::session{_last_accessed_time}, $format );
 }
 
+#
+# This function takes in the time, how it needs to be displayed,
+# and optionally a format to display it with (not in that order).
+# This is a generic routine used by the get_*_time functions.
 sub _get_time
 {
     my ( $as, $time, $format ) = @_;
+    #
+    # Default to "string", since thats how most people will want it
     $as = 'string' unless ( $as );
-    my $formatted_time = undef;
+
+    #
+    # Return the time as-is if they want the long format
     if ( $as eq 'long' )
     {
         return $time;
     }
+    
+    #
+    # Return the string format
     elsif ( $as eq 'string' )
     {
-        # Outputs a string like "Wed Jun 13 15:57:06 EDT 2001"
+        #
+        # Defaults to a string like "Wed Jun 13 15:57:06 EDT 2001"
         my $str_format = $format || '%a %b %d %H:%M:%S %Z %Y';
         return time2str($str_format, $time);
     }
 }
 
+# Sets an attribute into the given session.
 sub set_attribute
 {
     my ( $attribute, $value ) = @_;
+    
+    #
+    # Trim any left/right whitespace that may have been crammed in
+    # along with the XML tag.
     $attribute =~ s/^\s*//;
     $attribute =~ s/\s*$//;
     $value =~ s/^\s*//;
     $value =~ s/\s*$//;
+
+    #
     # exit out if they try to set any magic keys
     return if ( $attribute =~ /^_/ );
 
-    my $r = Apache->request;
+    #
+    # Shove the new value into our session hash
     $Apache::AxKit::Plugin::BasicSession::session{$attribute} = $value;
     return;
 }
@@ -97,21 +129,104 @@ sub set_attribute
 sub remove_attribute
 {
     my ( $attribute ) = @_;
+    #
+    # Trim whitespace, yadda yadda.
     $attribute =~ s/^\s*//;
     $attribute =~ s/\s*$//;
+
     # exit out if they try to set any magic keys
     return if ( $attribute =~ /^_/ );
 
-    my $r = Apache->request;
+    # 
+    # Toast the appropriate key
     delete $Apache::AxKit::Plugin::BasicSession::session{$attribute};
     return;
 }
 
+sub is_new
+{
+    return $Apache::AxKit::Plugin::BasicSession::session{_creation_time} == $Apache::AxKit::Plugin::BasicSession::session{_last_accessed_time};
+}
+
 sub invalidate
 {
-    my $r = Apache->request;
+    # Invalidate the session by deleting the tied object.  See Apache::Session
     tied(%Apache::AxKit::Plugin::BasicSession::session)->delete;
     return;
+}
+
+sub if_exists
+{
+    my ( $name ) = @_;
+    $name =~ s/^\s*//;
+    $name =~ s/\s*$//;
+    return exists($Apache::AxKit::Plugin::BasicSession::session{$name});
+}
+
+sub unless_exists
+{
+    my ( $name ) = @_;
+    $name =~ s/^\s*//;
+    $name =~ s/\s*$//;
+    return !exists($Apache::AxKit::Plugin::BasicSession::session{$name});
+}
+
+sub if_regex
+{
+    my ( $name, $value ) = @_;
+    $name =~ s/^\s*//;
+    $name =~ s/\s*$//;
+    return $Apache::AxKit::Plugin::BasicSession::session{$name} =~ /$value/;
+}
+
+sub unless_regex
+{
+    return !if_regex(@_);
+}
+
+sub ifkey
+{
+    my ( $name, $value ) = @_;
+    $name =~ s/^\s*//;
+    $name =~ s/\s*$//;
+    if (defined($value)) {
+        return $Apache::AxKit::Plugin::BasicSession::session{$name} ? 1 : 0;
+    } else {
+        return $Apache::AxKit::Plugin::BasicSession::session{$name} eq $value;
+    }
+}
+
+sub unlesskey
+{
+    return !ifkey(@_);
+}
+
+sub enumerate
+{
+    # Iterate through the hash keys, and return only the hash keys
+    # that don't start with "_".  There's most likely a mroe efficient
+    # way of handling this, but I'll get to it later (Patches welcome).
+    my @results = ();
+    foreach my $key (keys %Apache::AxKit::Plugin::BasicSession::session) {
+        push @results, {
+            name => $key,
+            value => $Apache::AxKit::Plugin::BasicSession::session{$key},
+        };
+    }
+    return @results;
+}
+
+sub keyexists
+{
+    my ( $name ) = @_;
+    $name =~ s/^\s*//;
+    $name =~ s/\s*$//;
+    return exists($Apache::AxKit::Plugin::BasicSession::session{$name});
+}
+
+sub count
+{
+    return scalar(keys(%Apache::AxKit::Plugin::BasicSession::session));
 }
 
 1;
@@ -129,12 +244,15 @@ Add the session: namespace to your XSP C<<xsp:page>> tag:
     <xsp:page
          language="Perl"
          xmlns:xsp="http://apache.org/xsp/core/v1"
-         xmlns:session="http://www.apache.org/1999/XSP/Session"
+         xmlns:session="http://www.axkit.org/2002/XSP/BasicSession"
     >
 
 And add this taglib to AxKit (via httpd.conf or .htaccess):
 
     AxAddXSPTaglib AxKit::XSP::BasicSession
+
+You'll also need to set up Apache::AxKit::Plugin::BasicSession, as
+described on its pod page.
 
 =head1 DESCRIPTION
 
@@ -145,9 +263,9 @@ reasons.  However, there are some tags that either didn't make sense to
 implement, or I augmented since I was there.
 
 Keep in mind, that currently this taglib does not actually create or
-fetch your session for you.  That has to happen outside this taglib.
-This module relies on the $r->pnotes() table for passing the session
-object around.
+fetch your session for you.  That has to happen outside this taglib -
+see Apache::AxKit::Plugin::BasicSession.  This module relies on the
+$r->pnotes() table for passing the session object around.
 
 Special thanks go out to Kip Hampton for creating AxKit::XSP::Sendmail, from
 which I created AxKit::XSP::BasicSession.
@@ -198,46 +316,52 @@ Invalidates, or permanently removes, the current session from the datastore.
 Not all Apache::Session implementations support this, but it works just beautifully
 under Apache::Session::File (which is what I used for my testing).
 
-=head1 Unsupported Tags
+=head2 C<<session:exists name="foo"/>>
 
-The following is a list of Cocoon2 Session taglib tags that I do not support
-in this implementation.
+Returns a boolean value representing whether the indicated session key exists,
+even if it has an empty or false value.
+
+=head2 C<<param:enumerate/>>
+
+Returns an enumerated list of the session keys present.  It's output is something
+like the following:
+
+  <session-keys>
+    <key id="1">
+      <name>foo</name>
+      <value>bar</name>
+    </key>
+    ...
+  </session-keys>
+
+=head2 C<<session:count/>>
+
+Returns the number of session keys that have been set for this particular session.
 
 =head2 C<<session:is-new>>
 
-The Cocoon2 documentation describes this as "Indicates whether this session was just created."
-This parameter is a part of the J2SE Servlet specification, but is not provided
-AFAIK by Apache::Session.  To implement this would involve putting in some
-strange "magic" value in the session object, and that didn't sit well with me.
-I'll probably implement this in the next version however.
+This tag returns a boolean value indicating if this session is a newly-created session.
 
-=head2 C<<session:get-creation-time>>, C<<session:get-last-accessed-time>>
+=head2 C<<session:if name="foo"></session:if>>
 
-I don't support the "node" "as" attribute type, which is supposed to output something
-similar to this:
+Executes the code contained within the block if the named key's value
+is true.  You can optionally supply the attribute "value" if you want to evaluate
+the value of a key against an exact string.
 
-    <session:creation-time>1006558479</session:creation-time>
+This tag, as well as all the other similar tags mentioned below can be changed to
+"unless" to perform the exact opposite (ala Perl's "unless").  All options must
+be supplied as attributes; child elements can not be used to supply these values.
 
-=head2 C<<session:get-max-inactive-interval>>, C<<session:set-max-inactive-interval>>
+=head2 C<<session:if-exists name="foo"></session:if-exists>>
 
-This is described in Cocoon2 as:
+Executes the code contained within the block if the named session key exists
+at all, regardless of it's value.
 
-  Gets the minimum time, in seconds, that the server will maintain this session between client requests.
+=head2 C<<session:if-regex name="foo" value="\w+"></session:if-regex>>
 
-I am not aware of any built-in Apache::Session support for this, but it could be
-usefull to implement this in the future.
-
-=head2 C<<xsp:page>>
-
-Under the Cocoon2 taglib, you can enable support for automatically creating sessions
-on-demand by putting 'create-session="true"' in the <xsp:page> node, like:
-
-  <xsp:page language="Perl" xmlns:xsp="http://apache.org/xsp/core/v1"
-    xmlns:session="http://www.apache.org/1999/XSP/Session"
-    create-session="true">
-
-This would be B<<really>> neat to have support for, but I couldn't figure out
-how to do this in AxKit.  Maybe the next release?
+Executes the code contained within the block if the named session key matches
+the regular expression supplied in the "value" attribute.  The "value" attribute
+is required.
 
 =head1 EXAMPLE
 
@@ -266,12 +390,12 @@ Michael A Nachbaur, mike@nachbaur.com
 
 =head1 COPYRIGHT
 
-Copyright (c) 2001-2003 Michael A Nachbaur. All rights reserved. This program is
+Copyright (c) 2001-2004 Michael A Nachbaur. All rights reserved. This program is
 free software; you can redistribute it and/or modify it under the same
 terms as Perl itself.
 
 =head1 SEE ALSO
 
-L<AxKit>, L<Apache::Session>, L<http://xml.apache.org/cocoon2/userdocs/xsp/session.html>
+L<AxKit>, L<Apache::Session>, L<Apache::AxKit::Plugin::BasicSession>
 
 =cut
