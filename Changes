@@ -1,0 +1,21 @@
+Revision history for Perl extension AxKit::XSP::BasicSession.
+
+0.13  Tue Nov 12 12:45:07 PST 2001
+    - Added Apache::AxKit::Plugin::AddXSLParams::BasicSession
+
+0.12  Mon Oct 28 11:43:33 PST 2001
+    - Changed name to BasicSession and changed the URI
+    - Moved XSP code over to TaglibHelper module
+    - Renamed session plugin to use the Ax 1.6 "Plugin" directory
+    - Removed "pnotes" code, since this was causing problems
+    - Now using global %session and pushed handlers to do cleanup
+    - Fixed Makefile.PL to include all module dependencies
+
+0.11  Fri Nov 30 15:20:22 PST 2001
+    - Fixed the version number (oops)
+    - Fixed whitespace around <name> and <value> tags
+    - Removed <get-last-accessed-date> PerlSetVar flag check
+
+0.01  Fri Nov 23 16:18:12 PST 2001
+    - original version; created by h2xs 1.20
+
