@@ -1,5 +1,5 @@
 package Apache::AxKit::Plugin::BasicSession;
-# $Id: BasicSession.pm,v 1.12 2004/07/06 23:16:04 nachbaur Exp $
+# $Id: BasicSession.pm,v 1.13 2004/08/19 22:31:21 nachbaur Exp $
 
 use Apache::Session::Flex;
 use Apache::Request;
@@ -7,7 +7,7 @@ use Apache::Cookie;
 use Apache::AuthCookie;
 use vars qw( $VERSION %session );
 
-$VERSION = 0.17;
+$VERSION = 0.19;
 
 sub handler
 {

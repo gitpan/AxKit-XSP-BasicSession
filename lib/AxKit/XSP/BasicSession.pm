@@ -1,5 +1,5 @@
 package AxKit::XSP::BasicSession;
-# $Id: BasicSession.pm,v 1.10 2004/07/06 23:16:04 nachbaur Exp $
+# $Id: BasicSession.pm,v 1.11 2004/08/19 22:31:22 nachbaur Exp $
 
 use Apache;
 use Apache::AxKit::Language::XSP::TaglibHelper;
@@ -31,7 +31,7 @@ sub parse_end   { Apache::AxKit::Language::XSP::TaglibHelper::parse_end(@_); }
 
 @ISA = qw(Apache::AxKit::Language::XSP::TaglibHelper);
 $NS = 'http://www.axkit.org/2002/XSP/BasicSession';
-$VERSION = "0.18";
+$VERSION = "0.19";
 
 use strict;
 

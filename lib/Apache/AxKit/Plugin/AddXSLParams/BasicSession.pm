@@ -1,5 +1,5 @@
 package Apache::AxKit::Plugin::AddXSLParams::BasicSession;
-# $Id: BasicSession.pm,v 1.3 2003/12/14 03:27:31 nachbaur Exp $
+# $Id: BasicSession.pm,v 1.4 2004/08/19 22:31:22 nachbaur Exp $
 
 use strict;
 use Apache::Constants;
@@ -7,7 +7,7 @@ use Apache::Cookie;
 use Apache::Request;
 use Apache::URI;
 use vars qw($VERSION);
-$VERSION = '0.17';
+$VERSION = '0.19';
 
 
 sub handler {

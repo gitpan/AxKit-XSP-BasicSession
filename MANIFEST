@@ -1,10 +1,12 @@
+MANIFEST
+Changes
+lib/Apache/AxKit/Plugin/AddXSLParams/BasicSession.pm
+lib/Apache/AxKit/Plugin/BasicAuth.pm
+lib/Apache/AxKit/Plugin/BasicSession.pm
+lib/AxKit/XSP/BasicAuth.pm
+lib/AxKit/XSP/BasicSession.pm
 t/01basic.t
 Makefile.PL
-Changes
-MANIFEST
 README
-lib/AxKit/XSP/BasicSession.pm
-lib/Apache/AxKit/Plugin/BasicSession.pm
-lib/Apache/AxKit/Plugin/AddXSLParams/BasicSession.pm
 example.xsp
 META.yml                                 Module meta-data (added by MakeMaker)
