@@ -5,7 +5,7 @@ use Apache::Cookie;
 use constant DEBUG => 0;
 use lib qw( $VERSION %session );
 
-$VERSION = 0.14;
+$VERSION = 0.15;
 
 sub handler
 {
@@ -39,14 +39,15 @@ sub handler
 
     # Read in the cookie if this is an old session
     my $cookie = $r->header_in('Cookie');
+    my $cookie_id = undef;
     {
         # eliminate logging of Apache::Session warn messages
         local $^W = 0;
 
-        $cookie =~ s/SESSION_ID=(\w*)/$1/;
-        if ( $cookie ) {
-            print STDERR "Loading existing session: \"$cookie\"\n" if DEBUG;
-            eval { tie %session, 'Apache::Session::Flex', $cookie, \%flex_options; };
+        ($cookie_id) = $cookie =~ /SESSION_ID=(\w*)/;
+        if ( $cookie_id ) {
+            print STDERR "Loading existing session: \"$cookie_id\"\n" if DEBUG;
+            eval { tie %session, 'Apache::Session::Flex', $cookie_id, \%flex_options; };
         }
         unless ( $session{_session_id} )
         {
@@ -57,7 +58,7 @@ sub handler
     }
 
     # Might be a new session, so lets give them a cookie
-    if (!defined($cookie) || $no_cookie)
+    if (!defined($cookie_id) || $no_cookie)
     {
         my %cookie_options = ();
         $cookie_options{'-expires'} = $r->dir_config('BasicSessionCookieExpires');

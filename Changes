@@ -1,5 +1,9 @@
 Revision history for Perl extension AxKit::XSP::BasicSession.
 
+0.15  Thu Nov 14 11:03:48 PST 2001
+    - Fixed cookie handling when dealing with multiple cookies bearing
+      the same name
+
 0.14  Wed Nov 13 13:58:52 PST 2001
     - Added cookie customization parameters to A:A:P:BasicSession
     - Changed Apache parameter names to use "BasicSession" to prevent

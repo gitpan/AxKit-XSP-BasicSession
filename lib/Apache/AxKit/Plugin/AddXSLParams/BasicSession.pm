@@ -6,7 +6,7 @@ use Apache::Cookie;
 use Apache::Request;
 use Apache::URI;
 use vars qw($VERSION);
-$VERSION = '0.14';
+$VERSION = '0.15';
 
 
 sub handler {
