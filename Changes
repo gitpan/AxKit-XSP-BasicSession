@@ -1,5 +1,12 @@
 Revision history for Perl extension AxKit::XSP::BasicSession.
 
+0.16  Tue Sep  9 09:05:48 PDT 2003
+    - Fixed some spelling errors in the POD documentation, as per
+      rt.cpan.org bug #2287
+    - Added Authentication patch contributed from
+      Mark A. Hershberger <mah@everybody.org>
+    - Documentation changes to reflect the new Authentication code
+
 0.15  Thu Nov 14 11:03:48 PST 2001
     - Fixed cookie handling when dealing with multiple cookies bearing
       the same name

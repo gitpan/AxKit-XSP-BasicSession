@@ -1,86 +1,80 @@
 package Apache::AxKit::Plugin::BasicSession;
+# $Id: BasicSession.pm,v 1.4 2003/09/09 17:11:30 nachbaur Exp $
+
 use Apache::Session::Flex;
 use Apache::Request;
 use Apache::Cookie;
-use constant DEBUG => 0;
-use lib qw( $VERSION %session );
+use Apache::AuthCookie;
+use vars qw( $VERSION %session );
 
-$VERSION = 0.15;
+$VERSION = 0.16;
 
 sub handler
 {
     my $r = Apache::Request->instance(shift);
+    my $debug = $r->dir_config("BasicSessionDebug") || 0;
 
     # Session handling code
     untie %session if (ref tied %session);
     my $no_cookie = 0;
     my $opts = {};
 
-    # Load the configuration parameters
-    my $cfgDataStore = $r->dir_config( 'BasicSessionDataStore' );
-    my $cfgLock      = $r->dir_config( 'BasicSessionLock' );
-    my $cfgGenerate  = $r->dir_config( 'BasicSessionGenerate' );
-    my $cfgSerialize = $r->dir_config( 'BasicSessionSerialize' );
+    $AxKit::XSP::Core::SessionCreator = \&AxKit::XSP::BasicSession::create;
 
-    my %flex_options = 
-    (
-        Store     => $cfgDataStore || 'DB_File',
-        Lock      => $cfgLock      || 'Null',
-        Generate  => $cfgGenerate  || 'MD5',
-        Serialize => $cfgSerialize || 'Storable'
+    #
+    # Fetch authentication name for this realm, or use the default 'BasicSession'
+    # if the user hasn't set this up for handling authentication (e.g. basic session-
+    # handling code)
+    my $prefix = $r->auth_name || 'BasicSession';
+
+    my %flex_options = (
+        Store     => $r->dir_config( $prefix . 'DataStore' ) || 'DB_File',
+        Lock      => $r->dir_config( $prefix . 'Lock' ) || 'Null',
+        Generate  => $r->dir_config( $prefix . 'Generate' ) || 'MD5',
+        Serialize => $r->dir_config( $prefix . 'Serialize' ) || 'Storable'
     );
 
-    # Load session-type specific parameters
-    foreach my $arg ( split( /\s*,\s*/, $r->dir_config( 'BasicSessionArgs' ) ) )
+    #
+    # Load session-type specific parameters, comma-separated, name => value pairs
+    foreach my $arg ( split( /\s*,\s*/, $r->dir_config( $prefix . 'Args' ) ) )
     {
         my ($key, $value) = split( /\s*=>\s*/, $arg );
         $flex_options{$key} = $value;
     }
 
-    # Read in the cookie if this is an old session
+    #
+    # Read in the cookie if this is an old session, using this realm's name as part
+    # of the cookie
     my $cookie = $r->header_in('Cookie');
     my $cookie_id = undef;
-    {
-        # eliminate logging of Apache::Session warn messages
-        local $^W = 0;
+    my ($auth_type, $auth_name) = ($r->auth_type, $r->auth_name);
+    ($cookie_id) = $cookie =~ /${auth_type}_$auth_name=(\w*)/;
 
-        ($cookie_id) = $cookie =~ /SESSION_ID=(\w*)/;
-        if ( $cookie_id ) {
-            print STDERR "Loading existing session: \"$cookie_id\"\n" if DEBUG;
-            eval { tie %session, 'Apache::Session::Flex', $cookie_id, \%flex_options; };
-        }
-        unless ( $session{_session_id} )
-        {
-            print STDERR "Creating a new session, since \"$session{_session_id}\" didn't work.\n" if DEBUG;
-            eval { tie %session, 'Apache::Session::Flex', undef, \%flex_options; };
-            $no_cookie = 1;
-        }
+    #
+    # Attempt to load the session from our back-end datastore
+    eval { tie %session, 'Apache::Session::Flex', $cookie_id, \%flex_options }
+        if ($cookie_id and $cookie_id ne '');
+    unless ( $session{_session_id} ) {
+        warn "Creating a new session, since \"$session{_session_id}\" didn't work.\n"
+            if $debug;
+        eval { tie %session, 'Apache::Session::Flex', undef, \%flex_options };
+        die "Problem creating session: $@" if $@;
+        $no_cookie = 1;
     }
 
     # Might be a new session, so lets give them a cookie
-    if (!defined($cookie_id) || $no_cookie)
-    {
-        my %cookie_options = ();
-        $cookie_options{'-expires'} = $r->dir_config('BasicSessionCookieExpires');
-        $cookie_options{'-domain'} = $r->dir_config('BasicSessionCookieDomain');
-        $cookie_options{'-path'} = $r->dir_config('BasicSessionCookiePath');
-        if ($r->dir_config('BasicSessionCookieSecure') =~ /yes/) {
-            $cookie_options{'-secure'} = 1;
-        }
-        my $session_cookie = Apache::Cookie->new($r,
-            -name => 'SESSION_ID',
-            -value => $session{_session_id},
-            %cookie_options,
-        );
-        $session_cookie->bake;
+    if (!defined($cookie_id) or $no_cookie) {
+        Apache::AuthCookie->send_cookie($session{_session_id});
         $session{_creation_time} = time;
-        print STDERR "Set a new header for the session cookie: \"$session_cookie\"\n" if DEBUG;
+        warn "Set a new header for the session cookie: \"$session_cookie\"\n"
+            if $debug;
     }
 
     # Update the "Last Accessed" timestamp key
     $session{_last_accessed_time} = time;
 
-    print STDERR "Successfully set the session object in the pnotes table\n" if DEBUG;
+    warn "Successfully set the session object in the pnotes table\n" 
+        if $debug;
 
     $r->push_handlers(PerlCleanupHandler => \&cleanup);
     return OK;
@@ -107,9 +101,15 @@ Apache::AxKit::Plugin::BasicSession - AxKit plugin that handles setting / loadin
 
 =head1 DESCRIPTION
 
-Session is an AxKit plugin which automatically creates and manages
+BasicSession is an AxKit plugin which automatically creates and manages
 server-side user sessions.  Based on Apache::Session::Flex, this allows
-you to specify all the parameters normally configurable through ::Flex.
+you to specify all the parameters normally configurable through A:S::Flex.
+
+B<NOTE>: If used in conjunction with the provided AxKit::XSP::BasicAuth module, the
+following parameter's names should be changed to reflect your local realm
+name.  For instance, "BasicSessionDataStore" should be changed to say
+"RealmNameDataStore".  This allows for different configuration parameters
+to be given to each realm in your site.
 
 =head1 Parameter Reference
 
@@ -143,14 +143,13 @@ database connection information.  You could pass this by calling:
 =head2 C<BasicSessionCookie*>
 
 These arguments set the parameters your session cookie will be created
-with.  The possible options are "BasicSessionCookiePath", "BasicSessionCookieDomain",
-"BasicSessionCookieExpires", "BasicSessionCookieSecure".  All options take an arbitrary
-string, except Expires and Secure.  BasicSessionCookieSecure takes a boolean (yes or no)
-while Expires takes a time interval (for more information, please see L<Apache::Cookie>).
+with.  These are named similarly to the above parameters, namely the prefix
+should reflect your local realm name (or "BasicSession" if you aren't doing
+authentication).  For more information, please see L<Apache::AuthCookie>.
 
-=head2 C<AxKit::XSP::Session Support>
+=head2 C<AxKit::XSP::BasicSession Support>
 
-This plugin was created to complement AxKit::XSP::Session, but can be used
+This plugin was created to complement AxKit::XSP::BasicSession, but can be used
 without the taglib.
 
 Every session access, the session key "_last_accessed_time" is set to the current
@@ -168,12 +167,12 @@ Michael A Nachbaur, mike@nachbaur.com
 
 =head1 COPYRIGHT
 
-Copyright (c) 2001 Michael A Nachbaur. All rights reserved. This program is
+Copyright (c) 2001-2003 Michael A Nachbaur. All rights reserved. This program is
 free software; you can redistribute it and/or modify it under the same
 terms as Perl itself.
 
 =head1 SEE ALSO
 
-AxKit, AxKit::XSP::Session, Apache::Session, Apache::Session::Flex
+L<AxKit>, L<AxKit::XSP::BasicSession>, L<Apache::Session>, L<Apache::Session::Flex>
 
 =cut

@@ -1,4 +1,5 @@
 package Apache::AxKit::Plugin::AddXSLParams::BasicSession;
+# $Id: BasicSession.pm,v 1.2 2003/09/09 16:34:47 nachbaur Exp $
 
 use strict;
 use Apache::Constants;
@@ -6,7 +7,7 @@ use Apache::Cookie;
 use Apache::Request;
 use Apache::URI;
 use vars qw($VERSION);
-$VERSION = '0.15';
+$VERSION = '0.16';
 
 
 sub handler {
@@ -68,7 +69,7 @@ these are considered "hidden" keys managed by the BasicSession package.
 
 =item * AxKit::XSP::BasicSession
 
-=item * AxKit (1.5 or greater)
+=item * AxKit (1.6 or greater)
 
 =back
 
@@ -76,8 +77,14 @@ these are considered "hidden" keys managed by the BasicSession package.
 
 Michael A Nachbaur, mike@nachbaur.com
 
+=head1 COPYRIGHT
+
+Copyright (c) 2001-2003 Michael A Nachbaur. All rights reserved. This program is
+free software; you can redistribute it and/or modify it under the same
+terms as Perl itself.
+
 =head1 SEE ALSO
 
-AxKit, AxKit::XSP::BasicSession, Apache::AxKit::Plugin::BasicSession
+L<AxKit>, L<AxKit::XSP::BasicSession>, L<Apache::AxKit::Plugin::BasicSession>
 
 =cut

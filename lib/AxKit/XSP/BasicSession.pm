@@ -1,4 +1,6 @@
 package AxKit::XSP::BasicSession;
+# $Id: BasicSession.pm,v 1.2 2003/09/09 16:34:47 nachbaur Exp $
+
 use Apache;
 use Apache::AxKit::Language::XSP::TaglibHelper;
 use Apache::Session;
@@ -20,7 +22,7 @@ sub parse_end   { Apache::AxKit::Language::XSP::TaglibHelper::parse_end(@_); }
 
 @ISA = qw(Apache::AxKit::Language::XSP::TaglibHelper);
 $NS = 'http://www.axkit.org/2002/XSP/BasicSession';
-$VERSION = "0.15";
+$VERSION = "0.16";
 
 use strict;
 
@@ -118,7 +120,7 @@ __END__
 
 =head1 NAME
 
-AxKit::XSP::Session - Session wrapper tag library for AxKit eXtesible Server Pages.
+AxKit::XSP::BasicSession - Session wrapper tag library for AxKit eXtesible Server Pages.
 
 =head1 SYNOPSIS
 
@@ -132,7 +134,7 @@ Add the session: namespace to your XSP C<<xsp:page>> tag:
 
 And add this taglib to AxKit (via httpd.conf or .htaccess):
 
-    AxAddXSPTaglib AxKit::XSP::Session
+    AxAddXSPTaglib AxKit::XSP::BasicSession
 
 =head1 DESCRIPTION
 
@@ -148,7 +150,7 @@ This module relies on the $r->pnotes() table for passing the session
 object around.
 
 Special thanks go out to Kip Hampton for creating AxKit::XSP::Sendmail, from
-which I created AxKit::XSP::Session.
+which I created AxKit::XSP::BasicSession.
 
 =head1 Tag Reference
 
@@ -264,12 +266,12 @@ Michael A Nachbaur, mike@nachbaur.com
 
 =head1 COPYRIGHT
 
-Copyright (c) 2001 Michael A Nachbaur. All rights reserved. This program is
+Copyright (c) 2001-2003 Michael A Nachbaur. All rights reserved. This program is
 free software; you can redistribute it and/or modify it under the same
 terms as Perl itself.
 
 =head1 SEE ALSO
 
-AxKit, Apache::Session, Cocoon2 Session Taglib (http://xml.apache.org/cocoon2/userdocs/xsp/session.html)
+L<AxKit>, L<Apache::Session>, L<http://xml.apache.org/cocoon2/userdocs/xsp/session.html>
 
 =cut

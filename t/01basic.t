@@ -8,9 +8,12 @@
 
 BEGIN { $| = 1; print "1..1\n"; }
 END {print "not ok 1\n" unless $loaded;}
-use AxKit::XSP::BasicSession;
-use Apache::AxKit::Plugin::BasicSession;
 use Apache::AxKit::Plugin::AddXSLParams::BasicSession;
+use Apache::AxKit::Plugin::BasicSession;
+use Apache::AxKit::Plugin::BasicAuth;
+use AxKit::XSP::BasicAuth;
+use AxKit::XSP::BasicSession;
+
 $loaded = 1;
 print "ok 1\n";
 
