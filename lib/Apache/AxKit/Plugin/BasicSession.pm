@@ -7,7 +7,7 @@ use Apache::Cookie;
 use Apache::AuthCookie;
 use vars qw( $VERSION %session );
 
-$VERSION = 0.19;
+$VERSION = 0.21;
 
 sub handler
 {
@@ -170,6 +170,8 @@ Therefore, you can use this configuration variable to set the name of a
 query parameter where the session ID can be found.  This is not required, but
 will be used in preference to a cookie if this query parameter is supplied.
 
+Note, however, that the W3C recommends against using this for external requests.
+
 =head2 C<BasicSessionCookie*>
 
 These arguments set the parameters your session cookie will be created
@@ -194,12 +196,14 @@ I'll update this if any glaring problems are found.
 =head1 AUTHOR
 
 Michael A Nachbaur, mike@nachbaur.com
+Kjetil Kjernsmo, kjetilk@cpan.org
+
 
 =head1 COPYRIGHT
 
-Copyright (c) 2001-2003 Michael A Nachbaur. All rights reserved. This program is
-free software; you can redistribute it and/or modify it under the same
-terms as Perl itself.
+Copyright (c) 2001-2004 Michael A Nachbaur, 2004 Kjetil Kjernsmo. All
+rights reserved. This program is free software; you can redistribute
+it and/or modify it under the same terms as Perl itself.
 
 =head1 SEE ALSO
 

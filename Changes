@@ -1,5 +1,13 @@
 Revision history for Perl extension AxKit::XSP::BasicSession.
 
+0.21	 2004-09-22
+	- A bugfix release. Some new export stuff in the previous
+	release caused some ungrokked errors.
+	- Small documentation corrections and addition.
+	- Added maintainer's PGP-signature.
+	- Added MANIFEST.SKIP.
+
+
 0.20	 2004-09-17
 	 - Added methods to access session contents from Perl.
 	 - Kjetil Kjernsmo takes over maintainance.

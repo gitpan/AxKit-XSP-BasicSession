@@ -1,0 +1,36 @@
+This file contains message digests of all files listed in MANIFEST,
+signed via the Module::Signature module, version 0.38.
+
+To verify the content in this distribution, first make sure you have
+Module::Signature installed, then type:
+
+    % cpansign -v
+
+It would check each file's integrity, as well as the signature's
+validity.  If "==> Signature verified OK! <==" is not displayed,
+the distribution may already have been compromised, and you should
+not run its Makefile.PL or Build.PL.
+
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA1
+
+SHA1 6324c7d640b43d37d92de75577cca4d8c262c5db Changes
+SHA1 77756af9369f0e46f4761403fd0f9429dacde665 MANIFEST
+SHA1 e394bbf37b03397a373f2c14574f6958870ddfe6 MANIFEST.SKIP
+SHA1 288c13bdd1d3936c7dc1b86140cc38e71a2a8093 META.yml
+SHA1 a3f7573f8f3ba99eec3eb15b8b1bad3aed3f1010 Makefile.PL
+SHA1 13004f6cdf91719696b5dbd3186e20bb6e88f1ff README
+SHA1 c504c8aa00dc166b2880d318d3c436cdfb03a197 example.xsp
+SHA1 62238363eedcf2c49f961cf6355b4b0da0ebf521 lib/Apache/AxKit/Plugin/AddXSLParams/BasicSession.pm
+SHA1 42c0a84041164aa4297b92cec09158a7d969871c lib/Apache/AxKit/Plugin/BasicAuth.pm
+SHA1 aa73cc62029fb15084b42d10eed1a9eab998c8ef lib/Apache/AxKit/Plugin/BasicSession.pm
+SHA1 1ab445ec0e4009109844687f535f2e3cf32fbc8c lib/AxKit/XSP/BasicAuth.pm
+SHA1 94cd0369135259976494ba0b638272a4748061df lib/AxKit/XSP/BasicSession.pm
+SHA1 48df29c1d5eb146bdc12da742314aed64ebe780f t/01basic.t
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.2.4 (GNU/Linux)
+
+iD8DBQFBUK73lE/Gp2pqC7wRAonnAJ9lDSrx2ty+9SJ4m9d91+eTBKy+AQCdHBsW
+qwpNrLRLwEBrTTwl238NzbU=
+=WrC4
+-----END PGP SIGNATURE-----

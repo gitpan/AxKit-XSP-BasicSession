@@ -31,7 +31,7 @@ sub parse_end   { Apache::AxKit::Language::XSP::TaglibHelper::parse_end(@_); }
 
 @ISA = qw(Apache::AxKit::Language::XSP::TaglibHelper);
 $NS = 'http://www.axkit.org/2002/XSP/BasicSession';
-$VERSION = "0.20";
+$VERSION = "0.21";
 
 use strict;
 
@@ -365,7 +365,7 @@ under Apache::Session::File (which is what I used for my testing).
 Returns a boolean value representing whether the indicated session key exists,
 even if it has an empty or false value.
 
-=head2 C<E<lt>param:enumerate/E<gt>>
+=head2 C<E<lt>session:enumerate/E<gt>>
 
 Returns an enumerated list of the session keys present.  It's output is something
 like the following:

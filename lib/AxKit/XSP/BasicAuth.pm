@@ -1,5 +1,4 @@
 package AxKit::XSP::BasicAuth;
-# $Id: BasicAuth.pm,v 1.3 2004/09/16 23:20:46 nachbaur Exp $
 
 use Apache;
 use Apache::AxKit::Language::XSP::TaglibHelper;
@@ -8,60 +7,34 @@ use Date::Format;
 
 use base qw(Apache::AxKit::Language::XSP::TaglibHelper);
 
-$NS = 'http://www.axkit.org/2004/XSP/BasicAuth';
-$VERSION = "0.02";
-@EXPORT_TAGLIB = (
-    'login()',
-    'logout()',
-    'get_username()',
-    'is_logged_in()',
-);
-
-our @ACTIONS = qw(
-    DATABASE_NAME DATABASE_HOST DATABASE_USERNAME DATABASE_PASSWORD
-);
-
-our @EXPORT = (
-    'TRUE', 'FALSE'
-);
-our @EXPORT_OK = (
-    @CONNECT
-);
-our %EXPORT_TAGS = (
-    'connect' => [@CONNECT],
-    'ALL'     => [@EXPORT, @EXPORT_OK],
-);
-
-use strict;
-
 sub parse_start {
-    my ($e, $tag, %attribs) = @_;
+  my ($e, $tag, %attribs) = @_;
 
-    if($tag eq 'login') {
-        $e->start_expr($tag);
-        return '
-            my $args = Apache::Request->instance($r)->parms;
-            my $value;
-            while (($_, $value) = each %$args) {
-                $Apache::AxKit::Plugin::BasicSession::session{$_} = $value if m{credential_(\d+)};
-            }
-            $r->headers_in->unset("Content-Length");
-            return $r->prev->uri if ($r->prev);
-        ';
-    } elsif($tag eq 'logout') {
+  if($tag eq 'login') {
+    $e->start_expr($tag);
+    return q{
+    my $args = Apache::Request->instance($r)->parms;
+    my $value;
+  while (($_, $value) = each %$args) {
+    $Apache::AxKit::Plugin::BasicSession::session{$_} = $value
+      if m{credential_(\d+)};
+  }
+  $r->headers_in->unset('Content-Length');
+  return $r->prev->uri if ($r->prev);}
+  } elsif($tag eq 'logout') {
     $e->start_expr($tag);
     return q{$r->auth_type->logout($r, \%Apache::AxKit::Plugin::BasicSession::session)}
-    } elsif($tag eq 'is-logged-in') {
+  } elsif($tag eq 'is-logged-in') {
     $e->start_expr($tag);
     return q{defined
-    $Apache::AxKit::Plugin::BasicSession::session{credential_0}
-    && $Apache::AxKit::Plugin::BasicSession::session{credential_0} ne ''}
-    } elsif($tag eq 'get-username') {
+      $Apache::AxKit::Plugin::BasicSession::session{credential_0}
+        && $Apache::AxKit::Plugin::BasicSession::session{credential_0} ne ''}
+  } elsif($tag eq 'get-username') {
     $e->start_expr($tag);
     return q{$Apache::AxKit::Plugin::BasicSession::session{credential_0}};
-    } else {
+  } else {
     return Apache::AxKit::Language::XSP::TaglibHelper::parse_start(@_);
-    }
+  }
 }
 
 sub parse_end {
@@ -74,6 +47,10 @@ sub parse_end {
     Apache::AxKit::Language::XSP::TaglibHelper::parse_end(@_);
   }
 }
+
+$NS = 'http://www.nichework.com/2003/XSP/BasicAuth';
+$VERSION = "0.20";
+@EXPORT_TAGS = qw( login() logout() get-username() is-logged-in() );
 
 1;
 
@@ -127,7 +104,7 @@ for AuthName.
 
 =head1 Tag Reference
 
-=head2 C<<auth:login>>
+=head2 C<E<lt>auth:loginE<gt>>
 
 Attempt to log the user in.
 
@@ -146,16 +123,16 @@ session information as well.  This allows you to store the plaintext
 user password in credential_1 if you need access to it (among other
 things).
 
-=head2 C<<auth:logout>>
+=head2 C<E<lt>auth:logoutE<gt>>
 
 Log the user out.  This is done by removing any keys that match the
 credential_\d+ regular expression from the session information.
 
-=head2 C<<auth:get-username>>
+=head2 C<E<lt>auth:get-usernameE<gt>>
 
 Returns the username that was used to log in.
 
-=head2 C<<auth:is-logged-in>>
+=head2 C<E<lt>auth:is-logged-inE<gt>>
 
 Returns true if the page if the session contains a logged in user.
 
