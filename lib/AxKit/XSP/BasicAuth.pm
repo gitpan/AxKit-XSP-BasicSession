@@ -49,7 +49,7 @@ sub parse_end {
 }
 
 $NS = 'http://www.nichework.com/2003/XSP/BasicAuth';
-$VERSION = "0.20";
+$VERSION = "0.22";
 @EXPORT_TAGS = qw( login() logout() get-username() is-logged-in() );
 
 1;
@@ -77,7 +77,7 @@ And add this taglib to AxKit (via httpd.conf or .htaccess):
 
     <Location />
       AuthType Apache::AxKit::Plugin::BasicAuth
-      AuthName Weblog
+      AuthName BasicSession
     </Location>
     <Location /style>
       require valid-user
@@ -85,14 +85,14 @@ And add this taglib to AxKit (via httpd.conf or .htaccess):
 
     # Session Management
     AxAddPlugin Apache::AxKit::Plugin::BasicSession
-    PerlSetVar WeblogDataStore DB_File
-    PerlSetVar WeblogArgs      "FileName => /tmp/session"
+    PerlSetVar BasicSessionDataStore DB_File
+    PerlSetVar BasicSessionArgs      "FileName => /tmp/session"
 
     AxAddPlugin Apache::AxKit::Plugin::BasicSession
     AxAddPlugin Apache::AxKit::Plugin::AddXSLParams::BasicSession
 
     # Authentication
-    PerlSetVar WeblogLoginScript /login
+    PerlSetVar BasicSessionLoginScript /login
 
 =head1 DESCRIPTION
 

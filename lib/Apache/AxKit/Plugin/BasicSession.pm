@@ -5,9 +5,10 @@ use Apache::Session::Flex;
 use Apache::Request;
 use Apache::Cookie;
 use Apache::AuthCookie;
+use AxKit;
 use vars qw( $VERSION %session );
 
-$VERSION = 0.21;
+$VERSION = 0.22;
 
 sub handler
 {
@@ -25,7 +26,6 @@ sub handler
     # if the user hasn't set this up for handling authentication (e.g. basic session-
     # handling code)
     my $prefix = $r->auth_name || 'BasicSession';
-    my $debug = $r->dir_config($prefix . "Debug") || 0;
 
     my %flex_options = (
         Store     => $r->dir_config( $prefix . 'DataStore' ) || 'DB_File',
@@ -65,8 +65,8 @@ sub handler
     eval { tie %session, 'Apache::Session::Flex', $sessionid, \%flex_options }
         if ($sessionid and $sessionid ne '');
     unless ( $session{_session_id} ) {
-        warn "Creating a new session, since \"$session{_session_id}\" didn't work.\n"
-            if $debug;
+        AxKit::Debug(6, "Creating a new session, since \"$session{_session_id}\" didn't work.");
+
         eval { tie %session, 'Apache::Session::Flex', undef, \%flex_options };
         die "Problem creating session: $@" if $@;
         $no_cookie = 1;
@@ -85,15 +85,13 @@ sub handler
         Apache::Cookie->new($r, %cookie_args)->bake;
 
         $session{_creation_time} = $current_time;
-        warn "Set a new header for the session cookie: \"$session_cookie\"\n"
-            if $debug;
+        AxKit::Debug(9, "Set a new header for the session cookie: \"$session_cookie\"");
     }
 
     # Update the "Last Accessed" timestamp key
     $session{_last_accessed_time} = $current_time;
 
-    warn "Successfully set the session object in the pnotes table\n" 
-        if $debug;
+    AxKit::Debug(9, "Successfully set the session object in the pnotes table");
 
     $r->push_handlers(PerlCleanupHandler => \&cleanup);
     return OK;
@@ -177,7 +175,13 @@ Note, however, that the W3C recommends against using this for external requests.
 These arguments set the parameters your session cookie will be created
 with.  These are named similarly to the above parameters, namely the prefix
 should reflect your local realm name (or "BasicSession" if you aren't doing
-authentication).  For more information, please see L<Apache::AuthCookie>.
+authentication). A common thing one might want to set is the expirytime of the session cookie. This can be set using the formats described in L<CGI::Cookie>, e.g.:
+
+  PerlSetVar BasicSessionCookieExpires +2d
+
+will make the cookie expire two days from now.
+
+For more information, please see L<Apache::AuthCookie>.
 
 =head2 C<AxKit::XSP::BasicSession Support>
 

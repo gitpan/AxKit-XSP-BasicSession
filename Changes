@@ -1,5 +1,12 @@
 Revision history for Perl extension AxKit::XSP::BasicSession.
 
+0.22	 2004-10-14
+	- Some small clarifications and expensions in the docs.
+	- We now use AxKit::Debug for debug messages, but not very 
+	  consistently...
+
+
+
 0.21	 2004-09-22
 	- A bugfix release. Some new export stuff in the previous
 	release caused some ungrokked errors.
