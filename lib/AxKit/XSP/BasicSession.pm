@@ -1,5 +1,5 @@
 package AxKit::XSP::BasicSession;
-# $Id: BasicSession.pm,v 1.11 2004/08/19 22:31:22 nachbaur Exp $
+# $Id: BasicSession.pm,v 1.12 2004/09/16 23:20:46 nachbaur Exp $
 
 use Apache;
 use Apache::AxKit::Language::XSP::TaglibHelper;
@@ -31,14 +31,41 @@ sub parse_end   { Apache::AxKit::Language::XSP::TaglibHelper::parse_end(@_); }
 
 @ISA = qw(Apache::AxKit::Language::XSP::TaglibHelper);
 $NS = 'http://www.axkit.org/2002/XSP/BasicSession';
-$VERSION = "0.19";
+$VERSION = "0.20";
 
 use strict;
+
+## Constructor used from within providers, or raw-perl code.  This is mainly
+# intended for code writers who want to access these methods from within perl
+# code, but don't want to use the full package name prefixed to the method calls.
+sub new
+{
+    my $pkg = shift;
+    my $class = ref($pkg) || $pkg;
+    my $self = {};
+    return bless $self, $class;
+}
+
+# This private function is used by other methods in this class to determine
+# if the method in question is being called as a method from within user-
+# constructed perl code, or from an XSP taglib.  If called from perl code,
+# and the method is invoked as $obj->methodName(), the $self object must
+# be shifted off the argument list.
+sub _calledAsMethod
+{
+    my $arg = shift;
+    if (ref($arg) and UNIVERSAL::isa($arg, 'AxKit::XSP::BasicSession')) {
+        return 1;
+    } else {
+        return 0;
+    }
+}
 
 ## Taglib subs
 
 sub get_attribute
 {
+    my $self = shift if (_calledAsMethod(@_));
     my ( $attribute ) = @_;
     #
     # Trim unnecessary whitespace
@@ -52,6 +79,7 @@ sub get_attribute
 
 sub get_id
 {
+    my $self = shift if (_calledAsMethod(@_));
     #
     # Hurl the Session ID to the user
     return $Apache::AxKit::Plugin::BasicSession::session{_session_id};
@@ -64,12 +92,14 @@ sub get_id
 # please tell me; otherwise, I'll leave it out.
 sub get_creation_time
 {
+    my $self = shift if (_calledAsMethod(@_));
     my ( $as, $format ) = @_;
     return _get_time( $as, $Apache::AxKit::Plugin::BasicSession::session{_creation_time}, $format );
 }
 
 sub get_last_accessed_time
 {
+    my $self = shift if (_calledAsMethod(@_));
     my ( $as, $format ) = @_;
     return _get_time( $as, $Apache::AxKit::Plugin::BasicSession::session{_last_accessed_time}, $format );
 }
@@ -80,6 +110,7 @@ sub get_last_accessed_time
 # This is a generic routine used by the get_*_time functions.
 sub _get_time
 {
+    my $self = shift if (_calledAsMethod(@_));
     my ( $as, $time, $format ) = @_;
     #
     # Default to "string", since thats how most people will want it
@@ -106,6 +137,7 @@ sub _get_time
 # Sets an attribute into the given session.
 sub set_attribute
 {
+    my $self = shift if (_calledAsMethod(@_));
     my ( $attribute, $value ) = @_;
     
     #
@@ -128,6 +160,7 @@ sub set_attribute
 
 sub remove_attribute
 {
+    my $self = shift if (_calledAsMethod(@_));
     my ( $attribute ) = @_;
     #
     # Trim whitespace, yadda yadda.
@@ -145,11 +178,13 @@ sub remove_attribute
 
 sub is_new
 {
+    my $self = shift if (_calledAsMethod(@_));
     return $Apache::AxKit::Plugin::BasicSession::session{_creation_time} == $Apache::AxKit::Plugin::BasicSession::session{_last_accessed_time};
 }
 
 sub invalidate
 {
+    my $self = shift if (_calledAsMethod(@_));
     # Invalidate the session by deleting the tied object.  See Apache::Session
     tied(%Apache::AxKit::Plugin::BasicSession::session)->delete;
     return;
@@ -157,6 +192,7 @@ sub invalidate
 
 sub if_exists
 {
+    my $self = shift if (_calledAsMethod(@_));
     my ( $name ) = @_;
     $name =~ s/^\s*//;
     $name =~ s/\s*$//;
@@ -165,6 +201,7 @@ sub if_exists
 
 sub unless_exists
 {
+    my $self = shift if (_calledAsMethod(@_));
     my ( $name ) = @_;
     $name =~ s/^\s*//;
     $name =~ s/\s*$//;
@@ -173,6 +210,7 @@ sub unless_exists
 
 sub if_regex
 {
+    my $self = shift if (_calledAsMethod(@_));
     my ( $name, $value ) = @_;
     $name =~ s/^\s*//;
     $name =~ s/\s*$//;
@@ -181,11 +219,13 @@ sub if_regex
 
 sub unless_regex
 {
+    my $self = shift if (_calledAsMethod(@_));
     return !if_regex(@_);
 }
 
 sub ifkey
 {
+    my $self = shift if (_calledAsMethod(@_));
     my ( $name, $value ) = @_;
     $name =~ s/^\s*//;
     $name =~ s/\s*$//;
@@ -198,11 +238,13 @@ sub ifkey
 
 sub unlesskey
 {
+    my $self = shift if (_calledAsMethod(@_));
     return !ifkey(@_);
 }
 
 sub enumerate
 {
+    my $self = shift if (_calledAsMethod(@_));
     # Iterate through the hash keys, and return only the hash keys
     # that don't start with "_".  There's most likely a mroe efficient
     # way of handling this, but I'll get to it later (Patches welcome).
@@ -218,6 +260,7 @@ sub enumerate
 
 sub keyexists
 {
+    my $self = shift if (_calledAsMethod(@_));
     my ( $name ) = @_;
     $name =~ s/^\s*//;
     $name =~ s/\s*$//;
@@ -226,6 +269,7 @@ sub keyexists
 
 sub count
 {
+    my $self = shift if (_calledAsMethod(@_));
     return scalar(keys(%Apache::AxKit::Plugin::BasicSession::session));
 }
 
@@ -239,7 +283,7 @@ AxKit::XSP::BasicSession - Session wrapper tag library for AxKit eXtesible Serve
 
 =head1 SYNOPSIS
 
-Add the session: namespace to your XSP C<<xsp:page>> tag:
+Add the session: namespace to your XSP C<E<lt>xsp:pageE<gt>> tag:
 
     <xsp:page
          language="Perl"
@@ -272,13 +316,13 @@ which I created AxKit::XSP::BasicSession.
 
 =head1 Tag Reference
 
-=head2 C<<session:get-attribute>>
+=head2 C<E<lt>session:get-attributeE<gt>>
 
 This is the most used tag.  It accepts either an attribute or child node
 called 'name'.  The value passed in 'name' is used as the key to retrieve
 data from the session object.
 
-=head2 C<<session:set-attribute>>
+=head2 C<E<lt>session:set-attributeE<gt>>
 
 Similar to :get-attribute, this tag will set an attribute.  It accepts an
 additional parameter (as an attribute or child node) called 'value'.  You
@@ -286,11 +330,11 @@ can intermix attribute and child nodes for either parameter, so its pretty
 flexible.  NOTE: this is different from Cocoon2, where the value is a child
 text node only.
 
-=head2 C<<session:get-id>>
+=head2 C<E<lt>session:get-idE<gt>>
 
 Gets the SessionID used for the current session.  This value is read-only.
 
-=head2 C<<session:get-creation-time>>
+=head2 C<E<lt>session:get-creation-timeE<gt>>
 
 Returns the time the current session was created.  Cocoon2's way of handling
 this is pretty wierd, so I didn't implement it 100% to spec.  This tag takes
@@ -300,28 +344,28 @@ string representation (e.g. "Fri Nov 23 15:38:13 PST 2001").  "long", contrary
 to what you would expect, is the number of seconds since epoch.  The Cocoon2 spec
 makes "long" the default, while mine specifies "string" as default.
 
-=head2 C<<session:get-last-accessed-time>>
+=head2 C<E<lt>session:get-last-accessed-timeE<gt>>
 
 Similar to :get-creation-time, except it returns the time since this session
 was last accessed (duh).
 
-=head2 C<<session:remove-attribute>>
+=head2 C<E<lt>session:remove-attributeE<gt>>
 
 Removes an attribute from the session object.  Accepts either an attribute or
 child node called 'name' which indicates which session attribute to remove.
 
-=head2 C<<session:invalidate>>
+=head2 C<E<lt>session:invalidateE<gt>>
 
 Invalidates, or permanently removes, the current session from the datastore.
 Not all Apache::Session implementations support this, but it works just beautifully
 under Apache::Session::File (which is what I used for my testing).
 
-=head2 C<<session:exists name="foo"/>>
+=head2 C<E<lt>session:exists name="foo"/E<gt>>
 
 Returns a boolean value representing whether the indicated session key exists,
 even if it has an empty or false value.
 
-=head2 C<<param:enumerate/>>
+=head2 C<E<lt>param:enumerate/E<gt>>
 
 Returns an enumerated list of the session keys present.  It's output is something
 like the following:
@@ -334,15 +378,15 @@ like the following:
     ...
   </session-keys>
 
-=head2 C<<session:count/>>
+=head2 C<E<lt>session:count/E<gt>>
 
 Returns the number of session keys that have been set for this particular session.
 
-=head2 C<<session:is-new>>
+=head2 C<E<lt>session:is-newE<gt>>
 
 This tag returns a boolean value indicating if this session is a newly-created session.
 
-=head2 C<<session:if name="foo"></session:if>>
+=head2 C<E<lt>session:if name="foo"E<gt></session:ifE<gt>>
 
 Executes the code contained within the block if the named key's value
 is true.  You can optionally supply the attribute "value" if you want to evaluate
@@ -352,16 +396,71 @@ This tag, as well as all the other similar tags mentioned below can be changed t
 "unless" to perform the exact opposite (ala Perl's "unless").  All options must
 be supplied as attributes; child elements can not be used to supply these values.
 
-=head2 C<<session:if-exists name="foo"></session:if-exists>>
+=head2 C<E<lt>session:if-exists name="foo"E<gt></session:if-existsE<gt>>
 
 Executes the code contained within the block if the named session key exists
 at all, regardless of it's value.
 
-=head2 C<<session:if-regex name="foo" value="\w+"></session:if-regex>>
+=head2 C<E<lt>session:if-regex name="foo" value="\w+"E<gt></session:if-regexE<gt>>
 
 Executes the code contained within the block if the named session key matches
 the regular expression supplied in the "value" attribute.  The "value" attribute
 is required.
+
+=head1 OBJECT-ORIENTED INTERFACE
+
+There are times when using this module that you might wish to access the
+BasicSession methods directly from Perl, rather than using the XSP taglib
+interfaces.  You may be within an <xsp:logic> block and not want the verbosity
+of a full XML tag, or you might have a heterogenous site with some XSP, some Perl
+providers.  Whatever the reason, the OO interface to BasicSession will work for you.
+
+Simply create a new BasicSession object by invoking the C<new> constructor on it:
+
+  my $bs = new AxKit::XSP::BasicSession;
+
+Once you have this object created, you can call any of the standard taglib
+methods by using the taglib name, transposing any "-" characters to underscores.
+
+The following is a list of the various methods available:
+
+=over 4
+
+=item get_attribute($name)
+
+=item get_id()
+
+=item get_creation_time([$as, [$format]])
+
+=item get_last_accessed_time([$as, [$format]])
+
+=item set_attribute($name, $value)
+
+=item remove_attribute($name)
+
+=item is_new($name)
+
+=item invalidate()
+
+=item if_exists($name)
+
+=item unless_exists($name)
+
+=item if_regex($name, $regex)
+
+=item unless_regex($name, $regex)
+
+=item ifkey($name, $value)
+
+=item unlesskey($name, $value)
+
+=item enumerate()
+
+=item keyexists($name)
+
+=item count()
+
+=back
 
 =head1 EXAMPLE
 

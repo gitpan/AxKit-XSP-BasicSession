@@ -1,5 +1,5 @@
 package Apache::AxKit::Plugin::BasicSession;
-# $Id: BasicSession.pm,v 1.13 2004/08/19 22:31:21 nachbaur Exp $
+# $Id: BasicSession.pm,v 1.14 2004/09/16 23:20:43 nachbaur Exp $
 
 use Apache::Session::Flex;
 use Apache::Request;
@@ -159,6 +159,16 @@ database connection information.  You could pass this by calling:
     PerlSetVar BasicSessionArgs "DataSource => dbi:mysql:sessions, \
                                  UserName   => session_user, \
                                  Password   => session_password"
+
+=head2 C<BasicSessionURIToken>
+
+While BasicSession defaults to using a cookie for sessions, there are times
+(e.g. when performing C<document()> lookups within XSLT stylesheets) when it
+is not possible to supply the proper cookie information with an HTTP request.
+
+Therefore, you can use this configuration variable to set the name of a
+query parameter where the session ID can be found.  This is not required, but
+will be used in preference to a cookie if this query parameter is supplied.
 
 =head2 C<BasicSessionCookie*>
 

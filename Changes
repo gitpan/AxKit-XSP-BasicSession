@@ -1,5 +1,16 @@
 Revision history for Perl extension AxKit::XSP::BasicSession.
 
+0.20	 2004-09-17
+	 - Added methods to access session contents from Perl.
+	 - Kjetil Kjernsmo takes over maintainance.
+	 - Added a session.id XSLT param.
+
+0.19	 2004-08-19	  
+	 - Updated manifest
+	 - Applied fix from Kjetil Kjernsmo 
+	 (for bug http://rt.cpan.org/NoAuth/Bug.html?id=5212)
+	 - Updated version numbers to be uniform
+
 0.18  Tue Jul  6 10:20:00 PDT 2004
     - Fixed a stupid comment in the Apache::AxKit::Plugin::BasicSession
 

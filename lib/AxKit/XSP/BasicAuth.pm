@@ -1,5 +1,5 @@
 package AxKit::XSP::BasicAuth;
-# $Id: BasicAuth.pm,v 1.2 2004/08/19 22:31:22 nachbaur Exp $
+# $Id: BasicAuth.pm,v 1.3 2004/09/16 23:20:46 nachbaur Exp $
 
 use Apache;
 use Apache::AxKit::Language::XSP::TaglibHelper;
@@ -8,34 +8,60 @@ use Date::Format;
 
 use base qw(Apache::AxKit::Language::XSP::TaglibHelper);
 
-sub parse_start {
-  my ($e, $tag, %attribs) = @_;
+$NS = 'http://www.axkit.org/2004/XSP/BasicAuth';
+$VERSION = "0.02";
+@EXPORT_TAGLIB = (
+    'login()',
+    'logout()',
+    'get_username()',
+    'is_logged_in()',
+);
 
-  if($tag eq 'login') {
-    $e->start_expr($tag);
-    return q{
-    my $args = Apache::Request->instance($r)->parms;
-    my $value;
-  while (($_, $value) = each %$args) {
-    $Apache::AxKit::Plugin::BasicSession::session{$_} = $value
-      if m{credential_(\d+)};
-  }
-  $r->headers_in->unset('Content-Length');
-  return $r->prev->uri if ($r->prev);}
-  } elsif($tag eq 'logout') {
+our @ACTIONS = qw(
+    DATABASE_NAME DATABASE_HOST DATABASE_USERNAME DATABASE_PASSWORD
+);
+
+our @EXPORT = (
+    'TRUE', 'FALSE'
+);
+our @EXPORT_OK = (
+    @CONNECT
+);
+our %EXPORT_TAGS = (
+    'connect' => [@CONNECT],
+    'ALL'     => [@EXPORT, @EXPORT_OK],
+);
+
+use strict;
+
+sub parse_start {
+    my ($e, $tag, %attribs) = @_;
+
+    if($tag eq 'login') {
+        $e->start_expr($tag);
+        return '
+            my $args = Apache::Request->instance($r)->parms;
+            my $value;
+            while (($_, $value) = each %$args) {
+                $Apache::AxKit::Plugin::BasicSession::session{$_} = $value if m{credential_(\d+)};
+            }
+            $r->headers_in->unset("Content-Length");
+            return $r->prev->uri if ($r->prev);
+        ';
+    } elsif($tag eq 'logout') {
     $e->start_expr($tag);
     return q{$r->auth_type->logout($r, \%Apache::AxKit::Plugin::BasicSession::session)}
-  } elsif($tag eq 'is-logged-in') {
+    } elsif($tag eq 'is-logged-in') {
     $e->start_expr($tag);
     return q{defined
-      $Apache::AxKit::Plugin::BasicSession::session{credential_0}
-        && $Apache::AxKit::Plugin::BasicSession::session{credential_0} ne ''}
-  } elsif($tag eq 'get-username') {
+    $Apache::AxKit::Plugin::BasicSession::session{credential_0}
+    && $Apache::AxKit::Plugin::BasicSession::session{credential_0} ne ''}
+    } elsif($tag eq 'get-username') {
     $e->start_expr($tag);
     return q{$Apache::AxKit::Plugin::BasicSession::session{credential_0}};
-  } else {
+    } else {
     return Apache::AxKit::Language::XSP::TaglibHelper::parse_start(@_);
-  }
+    }
 }
 
 sub parse_end {
@@ -48,10 +74,6 @@ sub parse_end {
     Apache::AxKit::Language::XSP::TaglibHelper::parse_end(@_);
   }
 }
-
-$NS = 'http://www.nichework.com/2003/XSP/BasicAuth';
-$VERSION = "0.01";
-@EXPORT_TAGS = qw( login() logout() get-username() is-logged-in() );
 
 1;
 

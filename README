@@ -28,3 +28,9 @@ where KEYNAME is the name for your session key.
 EXAMPLE:
 
 See the "example.xsp" page in the root of this distribution.
+
+AUTHORS
+
+Most of the code is written by Mike Nachbaur, with some contributions
+from Mark A. Hershberger. Currently, the module is being maintained by
+Kjetil Kjernsmo, kjetilk@cpan.org.
