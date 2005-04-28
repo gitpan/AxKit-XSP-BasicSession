@@ -1,8 +1,8 @@
 package Apache::AxKit::Plugin::BasicAuth;
-# $Id: BasicAuth.pm,v 1.3 2004/08/19 22:31:21 nachbaur Exp $
 
 use strict;
 use Apache;
+use AxKit;
 use Apache::Constants qw(:common M_GET);
 use Apache::AuthCookie;
 use Apache::Session::Flex;
@@ -13,13 +13,15 @@ use base qw(Apache::AuthCookie);
 
 use constant IN_PROGRESS => 1;
 
-$VERSION = 0.19;
+$VERSION = 0.23;
 
 sub authen_cred {
     my $self = shift;
     my $r = shift;
     my @creds = @_;
-
+    AxKit::Debug(10, "[BAuth] Login name given as " . 
+		 (defined($Apache::AxKit::Plugin::BasicSession::session{"credential_0"}) 
+		  ? $Apache::AxKit::Plugin::BasicSession::session{"credential_0"} : "undef"));
     # Don't call this unless you've authenticated the user.
     return $Apache::AxKit::Plugin::BasicSession::session{"_session_id"}
         if (defined $Apache::AxKit::Plugin::BasicSession::session{"credential_0"});
@@ -30,12 +32,10 @@ sub authen_ses_key ($$$) {
     my $r = shift;
     my $sess_id = shift;
 
+    AxKit::Debug(9, "[BAuth] SessionID given to authen_ses_key ". (defined($sess_id) ? $sess_id : "undef"));
     # Session handling code
     return $Apache::AxKit::Plugin::BasicSession::session{credential_0}
         if ($Apache::AxKit::Plugin::BasicSession::session{_session_id} eq $sess_id);
-
-#    untie %Apache::AxKit::Plugin::BasicSession::session
-#      if (ref tied %Apache::AxKit::Plugin::BasicSession::session);
 
     my $prefix = $r->auth_name;
 
@@ -45,6 +45,12 @@ sub authen_ses_key ($$$) {
         Generate  => $r->dir_config( $prefix . 'Generate' ) || 'MD5',
         Serialize => $r->dir_config( $prefix . 'Serialize' ) || 'Storable'
     );
+
+    # When using Postgres, a different default is needed.  
+    if ($flex_options{'Store'} eq 'Postgres') {
+        $flex_options{'Commit'} = 1;
+	$flex_options{'Serialize'} = $r->dir_config( $prefix . 'Serialize' ) || 'Base64'
+    }
 
     # Load session-type specific parameters
     foreach my $arg ( split( /\s*,\s*/, 
@@ -56,6 +62,8 @@ sub authen_ses_key ($$$) {
     eval { tie %Apache::AxKit::Plugin::BasicSession::session,
 	     'Apache::Session::Flex',
 	     $sess_id, \%flex_options; };
+
+    AxKit::Debug(9, "[BAuth] Retrieved session has id $Apache::AxKit::Plugin::BasicSession::session{_session_id}.");
 
     # invoke the custom_errors handler so we don't get fried...
     return (0, 0)

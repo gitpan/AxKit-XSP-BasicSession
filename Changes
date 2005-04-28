@@ -1,5 +1,18 @@
 Revision history for Perl extension AxKit::XSP::BasicSession.
 
+0.23_2	 2005-04-28 02:45
+	- Invalidation of session didn't work properly, which has
+	  obvious SECURITY issues. We found this has a result of a
+	  review sparked by inquires by Tom Kirkpatrick.
+	- Tom Kirkpatrick pointed out that get-last-accessed-time
+	  returned a meaningless time. Mike Nachbaur provided a patch
+	  for that.
+	- When using a Pg based backend, different defaults should
+	  used. 
+	- Actually implement the comment in enumerate.
+	- Some documentation cleanups.
+	- Added quite a lot of debugging statements. 
+
 0.22	 2004-10-14
 	- Some small clarifications and expensions in the docs.
 	- We now use AxKit::Debug for debug messages, but not very 

@@ -25,6 +25,14 @@ you want accessible in your stylesheets:
 
 where KEYNAME is the name for your session key.
 
+SECURITY ISSUES:
+
+This module up to 0.22 had security issues. It was found that the
+session was not properly invalidated, and so, information may be
+carried over, including authorization tokens, to a session even though
+the user believed that the previous session was exited. 
+
+
 EXAMPLE:
 
 See the "example.xsp" page in the root of this distribution.

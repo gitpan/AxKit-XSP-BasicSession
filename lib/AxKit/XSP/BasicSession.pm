@@ -1,5 +1,4 @@
 package AxKit::XSP::BasicSession;
-# $Id: BasicSession.pm,v 1.12 2004/09/16 23:20:46 nachbaur Exp $
 
 use Apache;
 use Apache::AxKit::Language::XSP::TaglibHelper;
@@ -31,7 +30,7 @@ sub parse_end   { Apache::AxKit::Language::XSP::TaglibHelper::parse_end(@_); }
 
 @ISA = qw(Apache::AxKit::Language::XSP::TaglibHelper);
 $NS = 'http://www.axkit.org/2002/XSP/BasicSession';
-$VERSION = "0.22";
+$VERSION = "0.23_2";
 
 use strict;
 
@@ -85,11 +84,13 @@ sub get_id
     return $Apache::AxKit::Plugin::BasicSession::session{_session_id};
 }
 
-# I've changed the API for this particular tag.  The Cocoon XSP definition for get-creation-time
-# really stinks.  The default first of all, is "long", which is basically number of seconds since
-# epoch.  It also has support for "node" output, which basically is the same as "long", except it
-# outputs the value in a hard-coded XML tag.  If there's any merit to the node output, someone
-# please tell me; otherwise, I'll leave it out.
+# I've changed the API for this particular tag.  The Cocoon XSP
+# definition for get-creation-time really stinks.  The default first
+# of all, is "long", which is basically number of seconds since epoch.
+# It also has support for "node" output, which basically is the same
+# as "long", except it outputs the value in a hard-coded XML tag.  If
+# there's any merit to the node output, someone please tell me;
+# otherwise, I'll leave it out.
 sub get_creation_time
 {
     my $self = shift if (_calledAsMethod(@_));
@@ -112,6 +113,10 @@ sub _get_time
 {
     my $self = shift if (_calledAsMethod(@_));
     my ( $as, $time, $format ) = @_;
+    #
+    # if $time isn't given, we return the current time since the
+    # session then is a brand new one
+    unless ($time) { $time = time(); }
     #
     # Default to "string", since thats how most people will want it
     $as = 'string' unless ( $as );
@@ -185,8 +190,11 @@ sub is_new
 sub invalidate
 {
     my $self = shift if (_calledAsMethod(@_));
+    my $r = Apache->request;
     # Invalidate the session by deleting the tied object.  See Apache::Session
     tied(%Apache::AxKit::Plugin::BasicSession::session)->delete;
+    %Apache::AxKit::Plugin::BasicSession::session = ();
+    Apache::AxKit::Plugin::BasicSession::handler($r);
     return;
 }
 
@@ -246,14 +254,15 @@ sub enumerate
 {
     my $self = shift if (_calledAsMethod(@_));
     # Iterate through the hash keys, and return only the hash keys
-    # that don't start with "_".  There's most likely a mroe efficient
+    # that don't start with "_".  There's most likely a more efficient
     # way of handling this, but I'll get to it later (Patches welcome).
     my @results = ();
     foreach my $key (keys %Apache::AxKit::Plugin::BasicSession::session) {
-        push @results, {
-            name => $key,
-            value => $Apache::AxKit::Plugin::BasicSession::session{$key},
-        };
+      next if ($key =~ /^_/);
+      push @results, {
+		      name => $key,
+		      value => $Apache::AxKit::Plugin::BasicSession::session{$key},
+		     };
     }
     return @results;
 }
@@ -279,7 +288,7 @@ __END__
 
 =head1 NAME
 
-AxKit::XSP::BasicSession - Session wrapper tag library for AxKit eXtesible Server Pages.
+AxKit::XSP::BasicSession - Session wrapper tag library for AxKit eXtensible Server Pages.
 
 =head1 SYNOPSIS
 
@@ -295,7 +304,7 @@ And add this taglib to AxKit (via httpd.conf or .htaccess):
 
     AxAddXSPTaglib AxKit::XSP::BasicSession
 
-You'll also need to set up Apache::AxKit::Plugin::BasicSession, as
+You'll also need to set up L<Apache::AxKit::Plugin::BasicSession>, as
 described on its pod page.
 
 =head1 DESCRIPTION
@@ -336,39 +345,42 @@ Gets the SessionID used for the current session.  This value is read-only.
 
 =head2 C<E<lt>session:get-creation-timeE<gt>>
 
-Returns the time the current session was created.  Cocoon2's way of handling
-this is pretty wierd, so I didn't implement it 100% to spec.  This tag takes
-an optional parameter of 'as', which allows you to choose your date format.
-Your only options are "string" and "long", where the string output is a human-readable
-string representation (e.g. "Fri Nov 23 15:38:13 PST 2001").  "long", contrary
-to what you would expect, is the number of seconds since epoch.  The Cocoon2 spec
+Returns the time the current session was created.  Cocoon2's way of
+handling this is pretty wierd, so I didn't implement it 100% to spec.
+This tag takes an optional parameter of 'as', which allows you to
+choose your date format.  Your only options are "string" and "long",
+where the string output is a human-readable string representation
+(e.g. "Fri Nov 23 15:38:13 PST 2001").  "long", contrary to what you
+would expect, is the number of seconds since epoch.  The Cocoon2 spec
 makes "long" the default, while mine specifies "string" as default.
 
 =head2 C<E<lt>session:get-last-accessed-timeE<gt>>
 
-Similar to :get-creation-time, except it returns the time since this session
-was last accessed (duh).
+Similar to :get-creation-time, except it returns the time since this
+session was last accessed (duh).
 
 =head2 C<E<lt>session:remove-attributeE<gt>>
 
-Removes an attribute from the session object.  Accepts either an attribute or
-child node called 'name' which indicates which session attribute to remove.
+Removes an attribute from the session object.  Accepts either an
+attribute or child node called 'name' which indicates which session
+attribute to remove.
 
 =head2 C<E<lt>session:invalidateE<gt>>
 
-Invalidates, or permanently removes, the current session from the datastore.
-Not all Apache::Session implementations support this, but it works just beautifully
-under Apache::Session::File (which is what I used for my testing).
+Invalidates, or permanently removes, the current session from the
+datastore.  Not all Apache::Session implementations support this, but
+it works just beautifully under Apache::Session::File (which is what I
+used for my testing).
 
 =head2 C<E<lt>session:exists name="foo"/E<gt>>
 
-Returns a boolean value representing whether the indicated session key exists,
-even if it has an empty or false value.
+Returns a boolean value representing whether the indicated session key
+exists, even if it has an empty or false value.
 
 =head2 C<E<lt>session:enumerate/E<gt>>
 
-Returns an enumerated list of the session keys present.  It's output is something
-like the following:
+Returns an enumerated list of the session keys present.  It's output
+is something like the following:
 
   <session-keys>
     <key id="1">
@@ -389,12 +401,13 @@ This tag returns a boolean value indicating if this session is a newly-created s
 =head2 C<E<lt>session:if name="foo"E<gt></session:ifE<gt>>
 
 Executes the code contained within the block if the named key's value
-is true.  You can optionally supply the attribute "value" if you want to evaluate
-the value of a key against an exact string.
+is true.  You can optionally supply the attribute "value" if you want
+to evaluate the value of a key against an exact string.
 
-This tag, as well as all the other similar tags mentioned below can be changed to
-"unless" to perform the exact opposite (ala Perl's "unless").  All options must
-be supplied as attributes; child elements can not be used to supply these values.
+This tag, as well as all the other similar tags mentioned below can be
+changed to "unless" to perform the exact opposite (ala Perl's
+"unless").  All options must be supplied as attributes; child elements
+can not be used to supply these values.
 
 =head2 C<E<lt>session:if-exists name="foo"E<gt></session:if-existsE<gt>>
 
@@ -403,24 +416,27 @@ at all, regardless of it's value.
 
 =head2 C<E<lt>session:if-regex name="foo" value="\w+"E<gt></session:if-regexE<gt>>
 
-Executes the code contained within the block if the named session key matches
-the regular expression supplied in the "value" attribute.  The "value" attribute
-is required.
+Executes the code contained within the block if the named session key
+matches the regular expression supplied in the "value" attribute.  The
+"value" attribute is required.
 
 =head1 OBJECT-ORIENTED INTERFACE
 
-There are times when using this module that you might wish to access the
-BasicSession methods directly from Perl, rather than using the XSP taglib
-interfaces.  You may be within an <xsp:logic> block and not want the verbosity
-of a full XML tag, or you might have a heterogenous site with some XSP, some Perl
-providers.  Whatever the reason, the OO interface to BasicSession will work for you.
+There are times when using this module that you might wish to access
+the BasicSession methods directly from Perl, rather than using the XSP
+taglib interfaces.  You may be within an <xsp:logic> block and not
+want the verbosity of a full XML tag, or you might have a heterogenous
+site with some XSP, some Perl providers.  Whatever the reason, the OO
+interface to BasicSession will work for you.
 
-Simply create a new BasicSession object by invoking the C<new> constructor on it:
+Simply create a new BasicSession object by invoking the C<new>
+constructor on it:
 
   my $bs = new AxKit::XSP::BasicSession;
 
-Once you have this object created, you can call any of the standard taglib
-methods by using the taglib name, transposing any "-" characters to underscores.
+Once you have this object created, you can call any of the standard
+taglib methods by using the taglib name, transposing any "-"
+characters to underscores.
 
 The following is a list of the various methods available:
 
@@ -480,8 +496,9 @@ The following is a list of the various methods available:
 
 =head1 ERRORS
 
-To tell you the truth, I haven't tested this enough to know what happens when it fails.
-I'll update this if any glaring problems are found.
+To tell you the truth, I haven't tested this enough to know what
+happens when it fails.  I'll update this if any glaring problems are
+found.
 
 =head1 AUTHOR
 
@@ -489,9 +506,9 @@ Michael A Nachbaur, mike@nachbaur.com
 
 =head1 COPYRIGHT
 
-Copyright (c) 2001-2004 Michael A Nachbaur. All rights reserved. This program is
-free software; you can redistribute it and/or modify it under the same
-terms as Perl itself.
+Copyright (c) 2001-2005 Michael A Nachbaur, 2005 Kjetil Kjernsmo. This
+program is free software; you can redistribute it and/or modify it
+under the same terms as Perl itself.
 
 =head1 SEE ALSO
 

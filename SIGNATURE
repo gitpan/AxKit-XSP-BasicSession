@@ -14,23 +14,23 @@ not run its Makefile.PL or Build.PL.
 -----BEGIN PGP SIGNED MESSAGE-----
 Hash: SHA1
 
-SHA1 cf36d6e730f411f0ad3a8a3a0c079ab918564182 Changes
+SHA1 2f5019037e81920208cc2f5040d15ba6edb798c3 Changes
 SHA1 77756af9369f0e46f4761403fd0f9429dacde665 MANIFEST
 SHA1 e394bbf37b03397a373f2c14574f6958870ddfe6 MANIFEST.SKIP
-SHA1 c4d11c8eec94cd25550d50802cdd6421a4fa8294 META.yml
+SHA1 017514d2484b8ec7ef2a7c56a40980caabba3d6c META.yml
 SHA1 a3f7573f8f3ba99eec3eb15b8b1bad3aed3f1010 Makefile.PL
-SHA1 13004f6cdf91719696b5dbd3186e20bb6e88f1ff README
+SHA1 98a187be0cd8a2095a1e24f5976960c32a47488b README
 SHA1 c504c8aa00dc166b2880d318d3c436cdfb03a197 example.xsp
 SHA1 62238363eedcf2c49f961cf6355b4b0da0ebf521 lib/Apache/AxKit/Plugin/AddXSLParams/BasicSession.pm
-SHA1 42c0a84041164aa4297b92cec09158a7d969871c lib/Apache/AxKit/Plugin/BasicAuth.pm
-SHA1 0c9dbb7b925306a3c8a229ebbb13f0753fb2e309 lib/Apache/AxKit/Plugin/BasicSession.pm
+SHA1 762627aa30a722cb118c86d7edee8720035fea28 lib/Apache/AxKit/Plugin/BasicAuth.pm
+SHA1 6fc334004b0b5e7f0d58449e222183c7f4493881 lib/Apache/AxKit/Plugin/BasicSession.pm
 SHA1 b0d4469156e05ab20d64d1f0b2ad4016dc8ae92f lib/AxKit/XSP/BasicAuth.pm
-SHA1 5f50e17a7d0f1bc6f58bc56624967d00e7bf005c lib/AxKit/XSP/BasicSession.pm
+SHA1 08cfaf03337255eb062861579dffbaf4ce425f51 lib/AxKit/XSP/BasicSession.pm
 SHA1 48df29c1d5eb146bdc12da742314aed64ebe780f t/01basic.t
 -----BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.2.4 (GNU/Linux)
+Version: GnuPG v1.2.5 (GNU/Linux)
 
-iD8DBQFBbpLHlE/Gp2pqC7wRAoBGAJ4oFEzkyjwClOEeeL7BxqpKV2yKHgCfXBee
-gkOvPY7sh/TNw4GVhwv3sWw=
-=n8Ll
+iD8DBQFCcDJ/lE/Gp2pqC7wRAiEqAJ9h8TgXiY/6NSeoRlem2srKzLAEXwCcCTsR
+EnR0maf9kl7hpNtps1xLhEE=
+=cDfC
 -----END PGP SIGNATURE-----

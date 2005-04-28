@@ -1,5 +1,4 @@
 package Apache::AxKit::Plugin::BasicSession;
-# $Id: BasicSession.pm,v 1.14 2004/09/16 23:20:43 nachbaur Exp $
 
 use Apache::Session::Flex;
 use Apache::Request;
@@ -8,7 +7,9 @@ use Apache::AuthCookie;
 use AxKit;
 use vars qw( $VERSION %session );
 
-$VERSION = 0.22;
+$VERSION = "0.23_1";
+
+use Data::Dumper;
 
 sub handler
 {
@@ -35,6 +36,12 @@ sub handler
     );
     my $uri_token = $r->dir_config( $prefix . 'URIToken' ) || undef;
 
+    # When using Postgres, a different default is needed.  
+    if ($flex_options{'Store'} eq 'Postgres') {
+        $flex_options{'Commit'} = 1;
+	$flex_options{'Serialize'} = $r->dir_config( $prefix . 'Serialize' ) || 'Base64'
+    }
+
     #
     # Load session-type specific parameters, comma-separated, name => value pairs
     foreach my $arg ( split( /\s*,\s*/, $r->dir_config( $prefix . 'Args' ) ) )
@@ -43,9 +50,13 @@ sub handler
         $flex_options{$key} = $value;
     }
 
+    
+
+
     my $sessionid = undef;
     if (defined $uri_token and length($uri_token) > 0) {
         $sessionid = $r->param($uri_token);
+	AxKit::Debug(10, "[BSession] SessionID given from URIToken \"$uri_token\" as ". (defined($sessionid) ? $sessionid : "undef"));
     }
 
     my $cookie_exists = 0;
@@ -57,6 +68,7 @@ sub handler
         my $cookie = $r->header_in('Cookie');
         #my ($auth_type, $auth_name) = ($r->auth_type, $r->auth_name);
         ($sessionid) = $cookie =~ /$cookie_name=(\w*)/;
+	AxKit::Debug(10, "[BSession] SessionID given cookie as ". (defined($sessionid) ? $sessionid : "undef"));
         $cookie_exists = defined($sessionid) ? 1 : 0;
     }
 
@@ -64,11 +76,14 @@ sub handler
     # Attempt to load the session from our back-end datastore
     eval { tie %session, 'Apache::Session::Flex', $sessionid, \%flex_options }
         if ($sessionid and $sessionid ne '');
+#    AxKit::Debug(5, "[BSession] Session hash: " . Dumper(%session));
+    AxKit::Debug(9, "[BSession] Retrieved session has id $session{_session_id}.");
     unless ( $session{_session_id} ) {
-        AxKit::Debug(6, "Creating a new session, since \"$session{_session_id}\" didn't work.");
+        AxKit::Debug(6, "[BSession] Creating a new session, since \"\$session{_session_id}\" had no value.");
 
         eval { tie %session, 'Apache::Session::Flex', undef, \%flex_options };
         die "Problem creating session: $@" if $@;
+        AxKit::Debug(9, "[BSession] New session created with id $session{_session_id}.");
         $no_cookie = 1;
     }
 
@@ -85,13 +100,13 @@ sub handler
         Apache::Cookie->new($r, %cookie_args)->bake;
 
         $session{_creation_time} = $current_time;
-        AxKit::Debug(9, "Set a new header for the session cookie: \"$session_cookie\"");
+        AxKit::Debug(9, "[BSession] Set a new header for the session cookie: \"$session_cookie\"");
     }
 
-    # Update the "Last Accessed" timestamp key
-    $session{_last_accessed_time} = $current_time;
+    # Store the "Last Accessed" timestamp for later
+    $session{_access_time} = $current_time;
 
-    AxKit::Debug(9, "Successfully set the session object in the pnotes table");
+    AxKit::Debug(9, "[BSession] Successfully set the session object in the pnotes table");
 
     $r->push_handlers(PerlCleanupHandler => \&cleanup);
     return OK;
@@ -99,6 +114,11 @@ sub handler
 
 sub cleanup {
     my $r = shift;
+    # Update the "Last Accessed" timestamp key
+    $session{_last_accessed_time} = $session{_access_time};
+    delete $session{_access_time};
+
+    # Untie and close the session
     untie %session;
 }
 
@@ -205,9 +225,9 @@ Kjetil Kjernsmo, kjetilk@cpan.org
 
 =head1 COPYRIGHT
 
-Copyright (c) 2001-2004 Michael A Nachbaur, 2004 Kjetil Kjernsmo. All
-rights reserved. This program is free software; you can redistribute
-it and/or modify it under the same terms as Perl itself.
+Copyright (c) 2001-2004 Michael A Nachbaur, 2004 Kjetil Kjernsmo. This
+program is free software; you can redistribute it and/or modify it
+under the same terms as Perl itself.
 
 =head1 SEE ALSO
 
