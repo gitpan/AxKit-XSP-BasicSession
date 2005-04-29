@@ -1,5 +1,9 @@
 Revision history for Perl extension AxKit::XSP::BasicSession.
 
+0.23_3	 2005-04-29 03:45
+	- Apply a patch from Mike Nachbaur to fix a AddXSLParam
+	  problem that made it not get new data in.
+
 0.23_2	 2005-04-28 02:45
 	- Invalidation of session didn't work properly, which has
 	  obvious SECURITY issues. We found this has a result of a

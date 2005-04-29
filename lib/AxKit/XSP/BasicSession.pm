@@ -30,7 +30,7 @@ sub parse_end   { Apache::AxKit::Language::XSP::TaglibHelper::parse_end(@_); }
 
 @ISA = qw(Apache::AxKit::Language::XSP::TaglibHelper);
 $NS = 'http://www.axkit.org/2002/XSP/BasicSession';
-$VERSION = "0.23_2";
+$VERSION = "0.23_3";
 
 use strict;
 
@@ -143,6 +143,7 @@ sub _get_time
 sub set_attribute
 {
     my $self = shift if (_calledAsMethod(@_));
+    my $apr = Apache::Request->instance(Apache->request);
     my ( $attribute, $value ) = @_;
     
     #
@@ -160,12 +161,19 @@ sub set_attribute
     #
     # Shove the new value into our session hash
     $Apache::AxKit::Plugin::BasicSession::session{$attribute} = $value;
+
+    #
+    # Update the AddXSLParams value, if populated
+    $apr->parms->set("session.keys.$attribute" => $value)
+        if ($apr->parms->get('session.id'));
+
     return;
 }
 
 sub remove_attribute
 {
     my $self = shift if (_calledAsMethod(@_));
+    my $apr = Apache::Request->instance(Apache->request);
     my ( $attribute ) = @_;
     #
     # Trim whitespace, yadda yadda.
@@ -178,6 +186,12 @@ sub remove_attribute
     # 
     # Toast the appropriate key
     delete $Apache::AxKit::Plugin::BasicSession::session{$attribute};
+
+    #
+    # Update the AddXSLParams value, if populated
+    $apr->parms->unset("session.keys.$attribute")
+        if ($apr->parms->get('session.id'));
+
     return;
 }
 
